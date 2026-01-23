@@ -7,6 +7,7 @@ from shiny.ui import page_navbar
 from shiny.express import render, ui, input
 from shiny import reactive
 
+from matplotlib import cbook
 #Variaveis de design
 pontos = '#0023FF'
 palavras = '#FFC400'
@@ -16,7 +17,7 @@ grafico2 = '#FFC400'
 
 ui.page_opts(
     title= "Cienvolva",  
-    page_fn=partial(page_navbar, id="page"),  
+    #page_fn=partial(page_navbar, id="page"),  
     fillable=True
 )
 
@@ -165,10 +166,10 @@ def hist_horizontal_comparativo(valores, duracao1, duracao2, mesmaEscala):
 
   #Definições histograma esquerda
 
-  duracao1 = duracao1.split()
-  duracao1 = int(duracao1[0])
-  if duracao1 == 1:
-    duracao1 = 60
+  #duracao1 = duracao1.split()
+  #duracao1 = int(duracao1[0])
+  #if duracao1 == 1:
+  # duracao1 = 60
 
   escala1 = 60/duracao1
   passo = 1/escala1
@@ -186,10 +187,10 @@ def hist_horizontal_comparativo(valores, duracao1, duracao2, mesmaEscala):
   #Fim definições histograma esquerda
 
   #Definições histograma direita
-  duracao2 = duracao2.split()
-  duracao2 = int(duracao2[0])
-  if duracao2 == 1:
-    duracao2 = 60
+  #duracao2 = duracao2.split()
+  #duracao2 = int(duracao2[0])
+  #if duracao2 == 1:
+  #  duracao2 = 60
 
   escala2 = 60/duracao2
   passo = 1/escala2
@@ -336,7 +337,7 @@ def hist_horizontal_comparativo(valores, duracao1, duracao2, mesmaEscala):
 
 with ui.nav_panel("Gráfico Comparativo"):  
     #Sidebar com menu de um gráfico comparativo, criação no gráfico no main tab
-    with ui.layout_columns(col_widths=(3,9)):
+    with ui.layout_columns(col_widths=(3,9), row_heights= (12), fill = True):
         with ui.card():  
             #"Aqui ficará o menu do gráfico comparativo" 
             #Caixa de texto p/ horarios
@@ -357,12 +358,148 @@ with ui.nav_panel("Gráfico Comparativo"):
                 else:
                     return hist_horizontal_comparativo(valores=tratamento(novo = input.text()), duracao1 = input.slider1(), duracao2 = input.slider2(), mesmaEscala = input.check())
 
+def delta_tempo(valores, intervalo):
+
+  #organização dos horários por ordem crescente
+  valores.sort()
+  if len(valores) == 0:
+    valores = [0]
+  valores = [0]+valores+[24+valores[0]]#Adiciona 0 e 24 mais primeiro valor, pra funcinar nas bordas
+  #Criação do gráfico e do seu tamanho
+  fig, ax = plt.subplots(figsize=(18, 5))
+
+  axes1 = fig.add_subplot(111)
+  for i in range(0,len(valores)-1):
+    #Plot de cada subconjunto do gráfico com o horario e o horario seguinte sendo o eixo x e o eixo y sendo o valor da diferença até 0
+    axes1.plot ([valores[i], valores[i+1]],[(valores[i+1]-valores[i]), 0], color = grafico1)
+
+  duracao = 1
+  escala = 1
+
+  Z = cbook.get_sample_data("axes_grid/bivariate_normal.npy")  # 15x15 array
+  Z2 = np.zeros((150, 150))
+  ny, nx = Z.shape
+  Z2[30:30+ny, 30:30+nx] = Z
+  extent = (-3, 4, -4, 3)
+  x1, x2, y1, y2 = -1.5, -0.9, -2.5, -1.9  # subregion of the original image
+  axes2 = ax.inset_axes(
+                    [0.5, 0.5, 0.47, 0.47],
+                    xlim=(x1, x2), ylim=(y1, y2), xticklabels=[], yticklabels=[])
+  axes2.imshow(Z2, extent=extent, origin="lower")
+  #axes1 é o gráfico maior
+  #axes2 é o gráfico menor
+
+  plt.setp(ax, xticks=[], yticks=[])
+  valores_intervalo = [intervalo[0]] #Lista com todos os valores de dentro do intervalo
+  for valor in valores:
+    if valor > intervalo[0] and valor < intervalo[1]:
+      valores_intervalo.append(valor)
+    elif valor >= intervalo[1]:
+      valores_intervalo.append(valor)
+      break
+
+  for i in range(0,len(valores)-1):
+    #Plot de cada subconjunto do gráfico com o horario e o horario seguinte sendo o eixo x e o eixo y sendo o valor da diferença até 0
+    axes2.plot ([valores[i], valores[i+1]],[(valores[i+1]-valores[i]), 0], color = grafico1)
+    #Plot de pontos na absissa de cada horario em que sai um onibus
+    axes2.plot (valores[i],0, marker = 'o', color = pontos)
+
+  media = sum([(valores_intervalo[i+1]-valores_intervalo[i])**2/2 for i in range(len(valores_intervalo)-1)]) #soma dos valores de dentro do intervalo
+  media -= (valores_intervalo[-1] - intervalo[1])**2/2 #Tirar o triangulo do final
+  media /= (intervalo[1]-intervalo[0]) #Dividido pela área
+
+
+  #Plot da linha de média
+  axes2.plot((intervalo[0], intervalo[-1]), [media]*2, color = media_cor)
+
+  #Formata os ticks que aparecem na tela como horas
+  #Posição das horas
+  major_positions=list(range(0,25))
+  cont =1
+  major_positions2 = list(range(0,25))
+  minor_positions2 = []
+  #Major_positions são as horas, passa por todas as horas e adiciona em minor_positions todas as divisões necessárias
+  for major_position in major_positions2:
+      while cont < 1:
+        minor_positions2.append(major_position+cont*0.5)
+        cont+=1
+      cont=1
+
+  #Valores que aparecem na tela
+  major_hora = []
+  minor_hora = []
+  i=0
+
+  while len(major_hora)<25:
+    major_hora.append(str(i)+':'+"00")
+    i+=1
+
+  #seta os ticks do gráfico maior no formato
+  axes1.tick_params(which='major', labelsize= 10, width=1.0, length=9)
+  axes1.tick_params(which='minor', labelsize = 8,  width=0.75, length=2.5)
+
+  #Fixa a posição dos ticks nos eixos do gráfico maior
+  axes1.xaxis.set_major_locator(ticker.FixedLocator(major_positions))
+  axes1.xaxis.set_major_formatter(ticker.FixedFormatter(major_hora))
+
+  #formata os ticks do gráfico menor
+  axes2.tick_params(which='major', labelsize= 10, width=1.0, length=9)
+  axes2.tick_params(which='minor', labelsize = 8,  width=0.75, length=2.5)
+
+  max_y = []
+  for i  in range(len(valores)-1):
+    if valores[i] >= intervalo[0] and valores[i] <= intervalo[-1]:
+      if len(max_y) == 0:
+        max_y.append(valores[i] - intervalo[0])
+      else:
+        max_y.append(valores[i+1]-valores[i])
+
+  i=0
+  while valores[i]<intervalo[-1]:
+    i += 1
+
+  if max_y == []:
+    max_y = [0,max(valores[i]-intervalo[0],media)]
+  axes2.set_ylim(0, max(max_y)+max(max_y)/10)
+  axes2.set_xlim(intervalo[0], intervalo[-1])
+
+  axes2.text((intervalo[-1] - ((intervalo[-1]-intervalo[0])/2)),(media + (max(max_y)/40)), "Tempo médio de espera no intervalo selecionado", color = palavras)
+
+  def float_para_hora(y, pos):
+    return f'{int(y):02d}:{int((y-int(y))*60):02d}'
+
+  axes2.yaxis.set_major_formatter(float_para_hora)
+  axes1.yaxis.set_major_formatter(float_para_hora)
+
+  axes2.xaxis.set_major_formatter(float_para_hora)
+
+  max_y = []
+  for i in range(0,len(valores)-1):
+    max_y.append(valores[i+1]-valores[i])
+  if max_y == []:
+    max_y = [0,24]
+  axes1.set_ylim(0,max(max_y)+max(max_y)/10)
+  axes1.set_xlim(0, 24.5)
+
+  #Indicadores são as linhas que ligam o gráfico menor e a maior
+  indicadores =  axes1.indicate_inset_zoom(inset_ax = axes2, edgecolor='black')
+
+  plt.show()
 
 
 with ui.nav_panel("Gráfico de tempo de espera"):  
     #Sidebar com menu de um gráfico de tempo de espera, criação no gráfico no main tab
     with ui.layout_columns(col_widths=(3,9)):
         with ui.card(): 
-            "Aqui ficará o menu do gráfico de tempo de espera"  
+            #"Aqui ficará o menu do gráfico de tempo de espera"  
+            ui.input_text_area("text", "Insira os horários: ", placeholder = "00:00 01:00 02:00 ...")
+            ui.input_slider("range", "Intervalo", min=0, max= 24, value = [00, 24], step = 0.25)
         with ui.card():
-            "Aqui ficará o gráfico de tempo de espera"
+            #"Aqui ficará o gráfico de tempo de espera"
+            @render.plot()
+            #@reactive.event(input.button)
+            def graf():
+                if input.text() == "":
+                  return
+                else:
+                  return delta_tempo(valores = tratamento(input.text()), intervalo = input.range())
