@@ -341,22 +341,22 @@ with ui.nav_panel("Gráfico Comparativo"):
         with ui.card():  
             #"Aqui ficará o menu do gráfico comparativo" 
             #Caixa de texto p/ horarios
-            ui.input_text_area("text", "Insira os horários", placeholder= "00:00 01:00 01:15...") 
+            ui.input_text_area("text1", "Insira os horários", placeholder= "00:00 01:00 01:15...") 
             #Slider p/ duração
             ui.input_slider("slider1", "Intervalo do gráfico da direita: ", min = 15, max = 60, value = 60, step = 15, post = " minutos")
             #Slider p/duração 2
             ui.input_slider("slider2", "Intervalo do gráfico da esquerda: ", min = 15, max = 60, value = 60, step = 15, post = " minutos")
             #Check p/ ajustar proporção
-            ui.input_checkbox("check", "Ajustar proporção", value = False)
+            ui.input_checkbox("check1", "Ajustar proporção", value = False)
         with ui.card():
             #"Aqui ficará o gráfico comparativo"
             @render.plot()
             #@reactive.event(input.button)
-            def graf():
-                if input.text() == "":
+            def graf1():
+                if input.text1() == "":
                    return
                 else:
-                    return hist_horizontal_comparativo(valores=tratamento(novo = input.text()), duracao1 = input.slider1(), duracao2 = input.slider2(), mesmaEscala = input.check())
+                    return hist_horizontal_comparativo(valores=tratamento(novo = input.text1()), duracao1 = input.slider1(), duracao2 = input.slider2(), mesmaEscala = input.check1())
 
 def delta_tempo(valores, intervalo):
 
@@ -366,9 +366,8 @@ def delta_tempo(valores, intervalo):
     valores = [0]
   valores = [0]+valores+[24+valores[0]]#Adiciona 0 e 24 mais primeiro valor, pra funcinar nas bordas
   #Criação do gráfico e do seu tamanho
-  fig, ax = plt.subplots(figsize=(18, 5))
+  fig, axes1 = plt.subplots(figsize=(30, 7))
 
-  axes1 = fig.add_subplot(111)
   for i in range(0,len(valores)-1):
     #Plot de cada subconjunto do gráfico com o horario e o horario seguinte sendo o eixo x e o eixo y sendo o valor da diferença até 0
     axes1.plot ([valores[i], valores[i+1]],[(valores[i+1]-valores[i]), 0], color = grafico1)
@@ -376,20 +375,11 @@ def delta_tempo(valores, intervalo):
   duracao = 1
   escala = 1
 
-  Z = cbook.get_sample_data("axes_grid/bivariate_normal.npy")  # 15x15 array
-  Z2 = np.zeros((150, 150))
-  ny, nx = Z.shape
-  Z2[30:30+ny, 30:30+nx] = Z
-  extent = (-3, 4, -4, 3)
-  x1, x2, y1, y2 = -1.5, -0.9, -2.5, -1.9  # subregion of the original image
-  axes2 = ax.inset_axes(
-                    [0.5, 0.5, 0.47, 0.47],
-                    xlim=(x1, x2), ylim=(y1, y2), xticklabels=[], yticklabels=[])
-  axes2.imshow(Z2, extent=extent, origin="lower")
+  axes2 = axes1.inset_axes(bounds = [.575, .55, .4, .4],zorder=6)
   #axes1 é o gráfico maior
   #axes2 é o gráfico menor
 
-  plt.setp(ax, xticks=[], yticks=[])
+  #plt.setp(ax, xticks=[], yticks=[])
   valores_intervalo = [intervalo[0]] #Lista com todos os valores de dentro do intervalo
   for valor in valores:
     if valor > intervalo[0] and valor < intervalo[1]:
@@ -463,7 +453,7 @@ def delta_tempo(valores, intervalo):
   axes2.set_ylim(0, max(max_y)+max(max_y)/10)
   axes2.set_xlim(intervalo[0], intervalo[-1])
 
-  axes2.text((intervalo[-1] - ((intervalo[-1]-intervalo[0])/2)),(media + (max(max_y)/40)), "Tempo médio de espera no intervalo selecionado", color = palavras)
+  axes2.text(intervalo[0],(media + (max(max_y)/40)), " Tempo médio de espera no intervalo selecionado", color = palavras)
 
   def float_para_hora(y, pos):
     return f'{int(y):02d}:{int((y-int(y))*60):02d}'
@@ -492,14 +482,14 @@ with ui.nav_panel("Gráfico de tempo de espera"):
     with ui.layout_columns(col_widths=(3,9)):
         with ui.card(): 
             #"Aqui ficará o menu do gráfico de tempo de espera"  
-            ui.input_text_area("text", "Insira os horários: ", placeholder = "00:00 01:00 02:00 ...")
+            ui.input_text_area("text2", "Insira os horários: ", placeholder = "00:00 01:00 02:00 ...")
             ui.input_slider("range", "Intervalo", min=0, max= 24, value = [00, 24], step = 0.25)
         with ui.card():
             #"Aqui ficará o gráfico de tempo de espera"
             @render.plot()
             #@reactive.event(input.button)
-            def graf():
-                if input.text() == "":
+            def graf2():
+                if input.text2() == "":
                   return
                 else:
-                  return delta_tempo(valores = tratamento(input.text()), intervalo = input.range())
+                  return delta_tempo(valores = tratamento(input.text2()), intervalo = input.range())
