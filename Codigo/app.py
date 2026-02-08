@@ -47,7 +47,7 @@ def tratamento (novo): #Tratamento dos dados de horarios
     valores = [0]
   return valores
 
-def hist_vertical(valores, duracao, escalaAutomatica):
+def hist_vertical(valores, duracao, foco, escalaAutomatica):
   #Seleciona o tamanho de intevalos como um int
   '''duracao = duracao.split()
   duracao = int(duracao[0])
@@ -111,7 +111,7 @@ def hist_vertical(valores, duracao, escalaAutomatica):
   bins = []
   cont = 0
   #Cria as bins como uma lista com todas as divisões
-  for i in range(0,24):
+  for i in range(0,25):
     bins.append(i)
     while cont < escala:
         bins.append(bins[len(bins)-1]+(passo))
@@ -121,8 +121,8 @@ def hist_vertical(valores, duracao, escalaAutomatica):
   ax.hist(valores, bins,width=passo, linewidth=0.5, edgecolor="white", color = grafico1)#valores = valores a serem sorteados, bins = quais as divisões
 
   #formata os ticks
-  ax.tick_params(which='major', labelsize= 10, width=1.0, length=9)
-  ax.tick_params(which='minor', labelsize = 8,  width=0.75, length=2.5)
+  ax.tick_params(which='major', labelsize= 8, width=1.0, length=9)
+  ax.tick_params(which='minor', labelsize = 5,  width=0.75, length=2.5)
 
   #Fixa a posição dos ticks nos eixos
   ax.xaxis.set_major_locator(ticker.FixedLocator(major_positions))
@@ -134,35 +134,89 @@ def hist_vertical(valores, duracao, escalaAutomatica):
 
   ax.set(xlim=(-0.5, 24.5*passo), xticks=np.arange(0, 24.5),
         ylim=(0, eixo_y), yticks=np.arange(0, eixo_y))
+  
+  altura = 0
+  for valor in valores:
+    if valor >= foco and valor < foco+duracao/60:
+      altura += 1
+  
+  plt.plot([-0.5,foco], [altura]*2, color = "orange", linestyle = ":")
+  ax.bar(foco, altura, color = "orange", align = "edge", width = duracao/60)
 
   plt.show()
 
-with ui.nav_panel("Gráfico Único"):  
+with ui.nav_panel("Horários de Ônibus"):  
     #Sidebar com menu de um gráfico único, criação no gráfico no main tab
-    with ui.layout_columns(col_widths=(3,9)):
+    with ui.layout_columns(col_widths=(4,8)):
       with ui.navset_card_tab():
-        with ui.nav_panel("Interativo"):  
-          #"Aqui ficará o menu do gráfico Único"
+        with ui.nav_panel(" ", icon= "🏠︎"):  
+          ui.markdown("""&emsp; Para começar precisamos de horários de ônibus!
+                      <br> &emsp; Você pode conseguir horários reais no [site ônibus de Joinville](https://onibus.info/linhas) basta escolher uma linha qualquer, copiar todos os horários do site e colar na caixa de texto como no exemplo\
+                      <br><br>""")
+          
           #Caixa de texto p/ horarios
           ui.input_text_area("text", "Insira os horários", placeholder= "00:00 \n01:00 \n01:15...") 
-          #Slider p/ duração
-          ui.input_slider("slider", "Selecione o Intervalo", min = 15, max = 60, value = 60, step = 15, post = " minutos")
+          def min_horas(min):
+            horas = min/60
+            return horas
+          ui.markdown("""
+                      <br> &emsp; Se não conseguir buscar os horários não tem problema, basta inventar alguns seguindo a lógica do exemplo.
+                      <br><br>
+                      &emsp;Navegue pelos horários mudando a opção de *horário pretendido* à esquerda, e observe os destaques no gráfico :) <br>""")
+          #Slider de foco
+          ui.input_slider("slider", "Selecione o foco", min = 0, max = 24, value = 6, step = 1, post = " horas")
+          
+          ui.markdown("""<br>&emsp;Você pode escolher também o *intervalo* de quantos minutos quiser a partir da hora pretendida.<br><br>""")
+          #Lista p/ duração
+          ui.input_radio_buttons("duracao", "Selecione o intervalo",
+                                 {"15": "15 minutos", "30": "30 minutos", "60": "1 hora"}, 
+                                 selected = "60")
+          ui.markdown("""<br>&emsp;Experimentou diminuir o intervalo?!
+                        <br>&emsp;A altura das barras vai diminuindo: natural, não é?! 
+                        <br>&emsp;Em intervalos menores que 1 hora geralmente vão sair menos ônibus que em 1 hora, e a diminuição de altura das barras expressa isso :)<br>
+                        <br>&emsp;Por outro lado, isso pode dificultar um pouco a leitura, além de ficar bastante espaço vazio no gráfico, concorda?!
+                        <br> &emsp;O que a gente poderia fazer pra melhorar essa visualização com intervalo menor e tirar esse espaço vazio?…<br><br>""")
           #Check p/ ajustar proporção
-          ui.input_checkbox("check", "Ajustar proporção", value = False)
-        with ui.nav_panel("Explicação"):
-          "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed sagittis metus sed lacinia aliquet. Praesent vestibulum tortor id libero blandit, in ultrices leo vestibulum. Maecenas lobortis, odio vel eleifend malesuada, elit urna semper dolor, auctor sagittis neque nulla nec nulla. Maecenas bibendum imperdiet justo, in aliquam nisi sodales quis. Quisque aliquam, sem eget elementum accumsan, nisl sem ullamcorper odio, ut consequat odio lectus at purus. Aenean lectus nisi, auctor quis venenatis eu, aliquam commodo velit. Etiam quis ex et magna pellentesque pretium vel non velit. Mauris a lobortis neque. Quisque malesuada justo a faucibus posuere. Curabitur sed vestibulum ipsum, ut consequat nisl. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec eget justo nulla. Vestibulum ut odio feugiat, euismod ligula scelerisque, congue mi. Vivamus cursus augue quis ante vulputate lacinia. Proin non fermentum massa, pharetra ultrices eros."
+          ui.input_checkbox("check", "Ajustar a escala", value = False)
+          ui.markdown("""<br>Experimente *ajustar a escala* e observe o que acontece…
+                      <br><br>Pronto! :D
+                      <br>Agora você conhece todas as funcionalidades dessa aba, pode interpretar o gráfico para ter as informações que quiser — pelo menos de quantos ônibus saem numa certa faixa de horário…
+                      <br>Se quiser continuar explorando nossas interatividades experimente a aba *Playground* onde você pode vizualizar melhor as funções
+                      <ul>
+                      <br><br><li> Quer testar seu conhecimento?! 
+                          <br>&emsp;--> explore nosso painel de perguntas!
+                      <br> <li> Quer explorar mais as diferenças de intervalos?!
+                      <br>&emsp;--> selecione *Comparativo* no topo da página!
+                      <br><li> Quer ter uma ideia do tempo de espera pra uma faixa de horário?! 
+                      <br>&emsp;--> selecione *Tempo de espera* no topo da página!
+                      <br><li> Quer contar pra gente como foi pra você passear por aqui?! 
+                      <br>&emsp;--> [clique aqui](link do formulário de satisfação)!
+                      <ul>""")
+
+        with ui.nav_panel("Playground"):
+          #Caixa de texto p/ horarios
+          ui.input_text_area("text", "Insira os horários", placeholder= "00:00 \n01:00 \n01:15...")
+          #Slider de foco
+          ui.input_slider("slider", "Selecione o foco", min = 0, max = 24, value = 6, step = 1, post = " horas")
+          #Lista p/ duração
+          ui.input_radio_buttons("duracao", "Selecione o intervalo",
+                                 {"15": "15 minutos", "30": "30 minutos", "60": "1 hora"}, 
+                                 selected = "60")
+          #Check p/ ajustar proporção
+          ui.input_checkbox("check", "Ajustar a escala", value = False)
         with ui.nav_panel("Perguntas"):
           "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed sagittis metus sed lacinia aliquet. Praesent vestibulum tortor id libero blandit, in ultrices leo vestibulum. Maecenas lobortis, odio vel eleifend malesuada, elit urna semper dolor, auctor sagittis neque nulla nec nulla. Maecenas bibendum imperdiet justo, in aliquam nisi sodales quis. Quisque aliquam, sem eget elementum accumsan, nisl sem ullamcorper odio, ut consequat odio lectus at purus. Aenean lectus nisi, auctor quis venenatis eu, aliquam commodo velit. Etiam quis ex et magna pellentesque pretium vel non velit. Mauris a lobortis neque. Quisque malesuada justo a faucibus posuere. Curabitur sed vestibulum ipsum, ut consequat nisl. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec eget justo nulla. Vestibulum ut odio feugiat, euismod ligula scelerisque, congue mi. Vivamus cursus augue quis ante vulputate lacinia. Proin non fermentum massa, pharetra ultrices eros."
       with ui.card():
-        #"Aqui ficará o gráfico Único"
+        "Aqui a gente visualiza como os horários desse ônibus estão distribuídos ao longo do dia: "
         @render.plot()
         #@reactive.event(input.button)
         def graf():
           if input.text() == "":
             return
           else:
-            return hist_vertical(valores=tratamento(novo = input.text()), duracao = input.slider(), escalaAutomatica = input.check())
-                
+            return hist_vertical(valores=tratamento(novo = input.text()), duracao = int(input.duracao()), foco = input.slider(), escalaAutomatica = input.check())
+
+        ui.markdown("""<br>&emsp;Entre <horário pretendido> e <horário pretendido + intervalo>, saem < contagem no intervalo> ônibus""")        
 #Histograma comparativo
 #Aqui está todo o processamento para formatar e criar um gráfico com dois histogramas lado a lado
 def hist_horizontal_comparativo(valores, duracao1, duracao2, mesmaEscala):
@@ -338,7 +392,7 @@ def hist_horizontal_comparativo(valores, duracao1, duracao2, mesmaEscala):
 
   plt.show()                
 
-with ui.nav_panel("Gráfico Comparativo"):  
+with ui.nav_panel("Comparativo"):  
   #Sidebar com menu de um gráfico comparativo, criação no gráfico no main tab
   with ui.layout_columns(col_widths=(3,9), row_heights= (12), fill = True):
     with ui.navset_card_tab():
@@ -485,14 +539,14 @@ def delta_tempo(valores, intervalo):
   plt.show()
 
 
-with ui.nav_panel("Gráfico de tempo de espera"):  
+with ui.nav_panel("Tempo de espera"):  
   #Sidebar com menu de um gráfico de tempo de espera, criação no gráfico no main tab
   with ui.layout_columns(col_widths=(3,9)):
     with ui.navset_card_tab(): 
       with ui.nav_panel("Interativo"):
         #"Aqui ficará o menu do gráfico de tempo de espera"  
         ui.input_text_area("text2", "Insira os horários: ", placeholder = "00:00 \n01:00 \n02:00 ...")
-        ui.input_slider("range", "Intervalo", min=0, max= 24, value = [00, 24], step = 0.25)
+        ui.input_slider("range", "Intervalo", min=0, max= 24, value = [00, 24], step = 0.5)
       with ui.nav_panel("Explicação"):
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed sagittis metus sed lacinia aliquet. Praesent vestibulum tortor id libero blandit, in ultrices leo vestibulum. Maecenas lobortis, odio vel eleifend malesuada, elit urna semper dolor, auctor sagittis neque nulla nec nulla. Maecenas bibendum imperdiet justo, in aliquam nisi sodales quis. Quisque aliquam, sem eget elementum accumsan, nisl sem ullamcorper odio, ut consequat odio lectus at purus. Aenean lectus nisi, auctor quis venenatis eu, aliquam commodo velit. Etiam quis ex et magna pellentesque pretium vel non velit. Mauris a lobortis neque. Quisque malesuada justo a faucibus posuere. Curabitur sed vestibulum ipsum, ut consequat nisl. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec eget justo nulla. Vestibulum ut odio feugiat, euismod ligula scelerisque, congue mi. Vivamus cursus augue quis ante vulputate lacinia. Proin non fermentum massa, pharetra ultrices eros."
       with ui.nav_panel("Fixação"):
