@@ -152,23 +152,26 @@ with ui.nav_panel("Horários de Ônibus"):
         with ui.nav_panel(" ", icon= "🏠︎"):  
           ui.markdown("""&emsp; Para começar precisamos de horários de ônibus!
                       <br> &emsp; Você pode conseguir horários reais no [site ônibus de Joinville](https://onibus.info/linhas) basta escolher uma linha qualquer, copiar todos os horários do site e colar na caixa de texto como no exemplo\
-                      <br><br>""")
+                      <br><br>
+                      <br>**Insira aqui os horários:**""")
           
           #Caixa de texto p/ horarios
-          ui.input_text_area("text", "Insira os horários", placeholder= "00:00 \n01:00 \n01:15...") 
+          ui.input_text_area("text", "", placeholder= "00:00 \n01:00 \n01:15...") 
           def min_horas(min):
             horas = min/60
             return horas
           ui.markdown("""
                       <br> &emsp; Se não conseguir buscar os horários não tem problema, basta inventar alguns seguindo a lógica do exemplo.
                       <br><br>
-                      &emsp;Navegue pelos horários mudando a opção de *horário pretendido* à esquerda, e observe os destaques no gráfico :) <br>""")
+                      &emsp;Navegue pelos horários mudando a opção de *horário pretendido* à esquerda, e observe os destaques no gráfico :) <br>
+                      <br>**Selecione aqui o foco:**""")
           #Slider de foco
-          ui.input_slider("slider", "Selecione o foco", min = 0, max = 24, value = 6, step = 1, post = " horas")
+          ui.input_slider("slider", "", min = 0, max = 24, value = 6, step = 1, post = " horas")
           
-          ui.markdown("""<br>&emsp;Você pode escolher também o *intervalo* de quantos minutos quiser a partir da hora pretendida.<br><br>""")
+          ui.markdown("""<br>&emsp;Você pode escolher também o *intervalo* de quantos minutos quiser a partir da hora pretendida.<br><br>
+                      <br>**Selecione aqui o intervalo:**""")
           #Lista p/ duração
-          ui.input_radio_buttons("duracao", "Selecione o intervalo",
+          ui.input_radio_buttons("duracao", " ",
                                  {"15": "15 minutos", "30": "30 minutos", "60": "1 hora"}, 
                                  selected = "60")
           ui.markdown("""<br>&emsp;Experimentou diminuir o intervalo?!
