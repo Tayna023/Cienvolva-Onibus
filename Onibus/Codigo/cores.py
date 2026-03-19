@@ -1,0 +1,5 @@
+pontos = '#0023FF'
+palavra_grafico = '#FFC400'
+media_cor = '#FFC400'
+grafico_cor1 = '#0023FF'
+grafico_cor2 = '#FFC400'
