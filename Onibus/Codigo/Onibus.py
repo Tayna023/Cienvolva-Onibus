@@ -3,7 +3,6 @@ import numpy as np
 import matplotlib.ticker as ticker
 
 import cores
-import quiz
 #Código dos onibus, gera os gráficos e trata os dados
 
 def tratamento (novo): #Tratamento dos dados de horarios
@@ -38,7 +37,7 @@ def tratamento (novo): #Tratamento dos dados de horarios
 
 class hist_vertical:
   #Seleciona o tamanho de intevalos como um int
-  def __init__ (self, valores, duracao, foco, escalaAutomatica):
+  def __init__ (self, valores = " ", duracao = 60, foco = 6, escalaAutomatica = True):
     self.valores = valores
     self.duracao = duracao
     self.foco = foco
@@ -47,8 +46,11 @@ class hist_vertical:
     self.passo = 1/self.escala
     self.eixo_y = 0
 
+  def get_valores(self):
+     return self.valores
+
   def get_escala(self):
-     return self.escala
+     return int(self.escala)
   
   def distribuicao(self):
     if self.escalaAutomatica:
